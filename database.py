@@ -19,7 +19,8 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
 # Check if we're in a production environment
 if os.getenv("RENDER"):
     # Render provides the database URL directly
-    engine = create_engine(DATABASE_URL)
+    # Add SSL configuration for Render
+    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 else:
     # Local development
     engine = create_engine(DATABASE_URL)

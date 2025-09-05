@@ -142,7 +142,7 @@ ehthumbs.db
 Thumbs.db
 
 # Render deployment files (these should be generated during deployment)
-render.yaml
+# render.yaml  # Uncommented this line so render.yaml can be committed
 
 # Local configuration files that shouldn't be committed
 *.local
