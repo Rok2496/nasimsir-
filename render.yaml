@@ -6,11 +6,11 @@ services:
     buildCommand: |
       # Force Python 3.12.6
       apt-get update
-      apt-get install -y gcc libpq-dev python3.12-dev python3.12-venv
+      apt-get install -y gcc libpq-dev python3.12-dev python3.12-venv postgresql-server-dev-all
       python3.12 -m venv .venv
       source .venv/bin/activate
       pip install --upgrade pip
-      pip install --no-cache-dir asyncpg==0.29.0
+      pip install --no-cache-dir psycopg2==2.9.9
       pip install -r requirements.txt
     startCommand: |
       source .venv/bin/activate
