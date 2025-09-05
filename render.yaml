@@ -10,8 +10,8 @@ services:
       python3.12 -m venv .venv
       source .venv/bin/activate
       pip install --upgrade pip
-      # Install psycopg2 from source
-      pip install --no-cache-dir psycopg2==2.9.9 --no-binary psycopg2
+      # Try to install psycopg2 from source first, fallback to binary if it fails
+      pip install --no-cache-dir psycopg2==2.9.9 --no-binary psycopg2 || pip install --no-cache-dir psycopg2-binary==2.9.9
       pip install -r requirements.txt
     startCommand: |
       source .venv/bin/activate
