@@ -7,4 +7,4 @@ set -e
 # alembic upgrade head
 
 # Start the FastAPI application
-exec uvicorn main:app --host 0.0.0.0 --port $PORT
+python -m uvicorn main:app --host 0.0.0.0 --port $PORT
