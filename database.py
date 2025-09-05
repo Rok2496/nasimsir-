@@ -19,10 +19,18 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
 if os.getenv("RENDER"):
     # Render provides the database URL directly
     # Add SSL configuration for Render
-    # Explicitly specify the driver
+    # Handle different database drivers
     if DATABASE_URL and "postgresql://" in DATABASE_URL:
-        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
-    engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+        # Try asyncpg first
+        asyncpg_url = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
+        try:
+            engine = create_engine(asyncpg_url, pool_pre_ping=True)
+        except Exception as e:
+            # Fallback to standard postgresql driver
+            print(f"Failed to create engine with asyncpg: {e}")
+            engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+    else:
+        engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 else:
     # Local development
     engine = create_engine(DATABASE_URL)
