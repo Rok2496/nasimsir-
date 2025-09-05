@@ -36,6 +36,7 @@ if os.getenv("RENDER"):
     allowed_origins = [
         "https://your-frontend-domain.onrender.com",  # Replace with your frontend URL
         "https://your-custom-domain.com",  # Replace with your custom domain
+        "https://smarttech1.netlify.app",  # Your production frontend
         "http://localhost:3000",  # For local development
         "http://localhost:3001"   # For local development
     ]
