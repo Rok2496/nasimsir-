@@ -6,12 +6,12 @@ services:
     buildCommand: |
       apt-get update
       apt-get install -y gcc libpq-dev python3-dev
-      pip install --no-cache-dir psycopg2-binary==2.9.9
+      pip install --no-cache-dir psycopg2==2.9.9
       pip install -r requirements.txt
     startCommand: python -m uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: PYTHON_VERSION
-        value: "3.13.4"
+        value: "3.12.6"
       - key: DATABASE_URL
         fromDatabase:
           name: smarttech-db
@@ -36,6 +36,7 @@ services:
         sync: false
       - key: RENDER
         value: "true"
+    runtime: python-3.12.6
 
 databases:
   - name: smarttech-db
