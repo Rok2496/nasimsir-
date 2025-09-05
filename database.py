@@ -2,7 +2,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
 import os
-import re
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -19,7 +18,10 @@ if DATABASE_URL and DATABASE_URL.startswith("postgres://"):
 # Check if we're in a production environment
 if os.getenv("RENDER"):
     # Render provides the database URL directly
-    # Add SSL configuration for Render
+    # Add SSL configuration for Render and use asyncpg
+    if DATABASE_URL and DATABASE_URL.startswith("postgresql://"):
+        # Replace with asyncpg format
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
     engine = create_engine(DATABASE_URL, pool_pre_ping=True)
 else:
     # Local development
