@@ -37,6 +37,18 @@ class EmailService:
             logger.error(f"Failed to send email notifications: {e}")
             raise e
     
+    async def send_order_status_update(self, order_data: dict, customer_data: dict):
+        """Send order status update notification to admin and customer"""
+        try:
+            # Send to admin
+            await self._send_admin_status_update(order_data, customer_data)
+            
+            # Send update to customer
+            await self._send_customer_status_update(order_data, customer_data)
+        except Exception as e:
+            logger.error(f"Failed to send email status updates: {e}")
+            raise e
+    
     async def _send_admin_notification(self, order_data: dict, customer_data: dict):
         """Send order notification to admin"""
         try:
@@ -57,6 +69,35 @@ class EmailService:
             logger.error(f"Failed to send admin notification: {e}")
             raise e
     
+    async def _send_admin_status_update(self, order_data: dict, customer_data: dict):
+        """Send order status update to admin"""
+        try:
+            status_labels = {
+                'confirmed': 'Confirmed',
+                'shipped': 'Shipped',
+                'delivered': 'Delivered',
+                'cancelled': 'Cancelled'
+            }
+            
+            status_label = status_labels.get(order_data['status'], order_data['status'])
+            subject = f"Order #{order_data['id']} Status Updated - {status_label}"
+            
+            template = self.env.get_template('admin_order_status_update.html')
+            html_content = template.render(
+                order=order_data,
+                customer=customer_data,
+                status_label=status_label
+            )
+            
+            await self._send_email(
+                to_email=self.recipient_email,
+                subject=subject,
+                html_content=html_content
+            )
+        except Exception as e:
+            logger.error(f"Failed to send admin status update: {e}")
+            raise e
+    
     async def _send_customer_confirmation(self, order_data: dict, customer_data: dict):
         """Send order confirmation to customer"""
         try:
@@ -75,6 +116,35 @@ class EmailService:
             )
         except Exception as e:
             logger.error(f"Failed to send customer confirmation: {e}")
+            raise e
+    
+    async def _send_customer_status_update(self, order_data: dict, customer_data: dict):
+        """Send order status update to customer"""
+        try:
+            status_labels = {
+                'confirmed': 'Confirmed',
+                'shipped': 'Shipped',
+                'delivered': 'Delivered',
+                'cancelled': 'Cancelled'
+            }
+            
+            status_label = status_labels.get(order_data['status'], order_data['status'])
+            subject = f"Order #{order_data['id']} Status Updated - {status_label}"
+            
+            template = self.env.get_template('customer_order_status_update.html')
+            html_content = template.render(
+                order=order_data,
+                customer=customer_data,
+                status_label=status_label
+            )
+            
+            await self._send_email(
+                to_email=customer_data['email'],
+                subject=subject,
+                html_content=html_content
+            )
+        except Exception as e:
+            logger.error(f"Failed to send customer status update: {e}")
             raise e
     
     async def _send_email(self, to_email: str, subject: str, html_content: str):

@@ -194,12 +194,54 @@ async def update_order(
     if db_order is None:
         raise HTTPException(status_code=404, detail="Order not found")
     
+    # Store the old status for comparison
+    old_status = db_order.status
+    
     update_data = order.dict(exclude_unset=True)
     for key, value in update_data.items():
         setattr(db_order, key, value)
     
     db.commit()
     db.refresh(db_order)
+    
+    # Send notifications when status changes to specific values
+    if 'status' in update_data and update_data['status'] != old_status:
+        new_status = update_data['status']
+        if new_status in ['confirmed', 'shipped', 'delivered', 'cancelled']:
+            # Get customer and product information for notifications
+            db_customer = db.query(CustomerModel).filter(CustomerModel.id == db_order.customer_id).first()
+            db_product = db.query(ProductModel).filter(ProductModel.id == db_order.product_id).first()
+            
+            if db_customer and db_product:
+                # Prepare data for notifications
+                order_data = {
+                    "id": db_order.id,
+                    "product_name": db_product.name,
+                    "quantity": db_order.quantity,
+                    "total_price": db_order.total_price,
+                    "status": db_order.status,
+                    "special_requirements": db_order.special_requirements,
+                    "delivery_address": db_order.delivery_address,
+                    "order_date": db_order.order_date.strftime("%Y-%m-%d %H:%M:%S")
+                }
+                
+                customer_info = {
+                    "full_name": db_customer.full_name,
+                    "email": db_customer.email,
+                    "phone": db_customer.phone,
+                    "address": db_customer.address,
+                    "city": db_customer.city,
+                    "country": db_customer.country
+                }
+                
+                # Send notifications
+                try:
+                    await email_service.send_order_status_update(order_data, customer_info)
+                    await telegram_service.send_order_status_update(order_data, customer_info)
+                except Exception as e:
+                    print(f"Notification error: {e}")
+                    # Continue even if notifications fail
+    
     return db_order
 
 @order_router.delete("/{order_id}")

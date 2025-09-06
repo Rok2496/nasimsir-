@@ -38,6 +38,26 @@ class TelegramService:
             logger.error(f"Telegram notification failed: {e}")
             raise e
     
+    async def send_order_status_update(self, order_data: dict, customer_data: dict):
+        """Send order status update to Telegram"""
+        try:
+            message = self._format_status_update_message(order_data, customer_data)
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.base_url}/sendMessage",
+                    json={
+                        "chat_id": self.chat_id,
+                        "text": message,
+                        "parse_mode": "HTML"
+                    }
+                )
+                response.raise_for_status()
+                logger.info("Telegram status update sent successfully")
+        except Exception as e:
+            logger.error(f"Telegram status update failed: {e}")
+            raise e
+    
     def _format_order_message(self, order_data: dict, customer_data: dict) -> str:
         """Format order data for Telegram message"""
         return f"""
@@ -62,6 +82,43 @@ class TelegramService:
 
 🚚 <b>Delivery Address:</b>
 {order_data.get('delivery_address', 'Same as customer address')}
+
+📅 <b>Order Date:</b> {order_data['order_date']}
+        """.strip()
+    
+    def _format_status_update_message(self, order_data: dict, customer_data: dict) -> str:
+        """Format order status update for Telegram message"""
+        status_emojis = {
+            'confirmed': '✅',
+            'shipped': '🚚',
+            'delivered': '📦',
+            'cancelled': '❌'
+        }
+        
+        status_labels = {
+            'confirmed': 'Confirmed',
+            'shipped': 'Shipped',
+            'delivered': 'Delivered',
+            'cancelled': 'Cancelled'
+        }
+        
+        emoji = status_emojis.get(order_data['status'], 'ℹ️')
+        status_label = status_labels.get(order_data['status'], order_data['status'])
+        
+        return f"""
+{emoji} <b>Order Status Updated!</b>
+
+📋 <b>Order Details:</b>
+• Order ID: #{order_data['id']}
+• Product: {order_data['product_name']}
+• Quantity: {order_data['quantity']}
+• Total: ${order_data['total_price']:.2f}
+• Status: {status_label}
+
+👤 <b>Customer Information:</b>
+• Name: {customer_data['full_name']}
+• Email: {customer_data['email']}
+• Phone: {customer_data['phone']}
 
 📅 <b>Order Date:</b> {order_data['order_date']}
         """.strip()
