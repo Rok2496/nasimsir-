@@ -1,6 +1,11 @@
 import httpx
 import os
 from dotenv import load_dotenv
+import logging
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -9,13 +14,16 @@ class TelegramService:
         self.bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
         self.chat_id = os.getenv("TELEGRAM_CHAT_ID")
         self.base_url = f"https://api.telegram.org/bot{self.bot_token}"
+        
+        # Log initialization
+        logger.info(f"TelegramService initialized with bot token: {self.bot_token[:10]}... and chat_id: {self.chat_id}")
     
     async def send_order_notification(self, order_data: dict, customer_data: dict):
         """Send order notification to Telegram"""
-        message = self._format_order_message(order_data, customer_data)
-        
-        async with httpx.AsyncClient() as client:
-            try:
+        try:
+            message = self._format_order_message(order_data, customer_data)
+            
+            async with httpx.AsyncClient() as client:
                 response = await client.post(
                     f"{self.base_url}/sendMessage",
                     json={
@@ -25,10 +33,10 @@ class TelegramService:
                     }
                 )
                 response.raise_for_status()
-                print("Telegram notification sent successfully")
-            except Exception as e:
-                print(f"Telegram notification failed: {e}")
-                raise e
+                logger.info("Telegram notification sent successfully")
+        except Exception as e:
+            logger.error(f"Telegram notification failed: {e}")
+            raise e
     
     def _format_order_message(self, order_data: dict, customer_data: dict) -> str:
         """Format order data for Telegram message"""
